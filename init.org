@@ -383,6 +383,12 @@
    (epa-file-enable)
    #+END_SRC
 
+   Set default fon
+
+   #+BEGIN_SRC emacs-lisp
+   (set-default-font "Courier New 12")
+   #+END_SRC
+
 ** Modes
 
    There are some modes that are enabled by default that I don't find

@@ -315,6 +315,10 @@ PACKAGE is installed and the current version is deleted."
 
 (epa-file-enable)
 
+;; Set default fon
+
+(set-default-font "Courier New 12")
+
 ;; Modes
 
 ;;    There are some modes that are enabled by default that I don't find
