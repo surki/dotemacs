@@ -141,6 +141,7 @@ PACKAGE is installed and the current version is deleted."
             elscreen             ; Emacs window session manager
             expand-region        ; Increase selected region by semantic units
             flx-ido              ; flx integration for ido
+            git-timemachine      ; Walk through git revisions of a file
             ggtags               ; emacs frontend to GNU Global source code tagging system
             htmlize              ; Convert buffer text and decorations to HTML
             hungry-delete        ; hungry delete minor mode
