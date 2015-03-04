@@ -14,17 +14,33 @@
 tangled, and the tangled file is compiled."
   (when (equal (buffer-file-name)
                (expand-file-name (concat user-emacs-directory "init.org")))
-    (org-babel-tangle)
-    (byte-compile-file (concat user-emacs-directory "init.el"))))
+    ;; Avoid running hooks when tangling.
+    (let ((prog-mode-hook nil))
+      (org-babel-tangle)
+      (byte-compile-file (concat user-emacs-directory "init.el")))))
 
 (add-hook 'after-save-hook 'tangle-init)
 
+;; I'd like to keep a few settings private, so we load a =private.el= if it
+;;    exists after the init-file has loaded.
+
+(add-hook
+ 'after-init-hook
+ (lambda ()
+   (let ((private-file (concat user-emacs-directory "private.el")))
+     (when (file-exists-p private-file)
+       (load-file private-file)))))
+
 ;; Package
 
-;;    Managing extensions for Emacs is simplified using =package= which
-;;    is built in to Emacs 24 and newer. To load downloaded packages we
-;;    need to initialize =package=.
+;;    Managing extensions for Emacs is simplified using =package= which is
+;;    built in to Emacs 24 and newer. To load downloaded packages we need to
+;;    initialize =package=. =cl= is a library that contains many functions from
+;;    Common Lisp, and comes in handy quite often, so we want to make sure it's
+;;    loaded, along with =package=, which is obviously needed.
 
+(prefer-coding-system 'utf-8)
+(require 'cl)
 (require 'package)
 (setq package-enable-at-startup nil)
 (package-initialize)
@@ -35,7 +51,7 @@ tangled, and the tangled file is compiled."
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
         ("org" . "http://orgmode.org/elpa/")
-        ("MELPA" . "http://melpa.milkbox.net/packages/")
+        ("MELPA" . "http://melpa.org/packages/")
         ("e6h" . "http://e6h.org/packages/")))
 
 ;; We can define a predicate that tells us whether or not the newest version
@@ -44,12 +60,19 @@ tangled, and the tangled file is compiled."
 (defun newest-package-installed-p (package)
   "Return true if the newest available PACKAGE is installed."
   (when (package-installed-p package)
-    (let* ((local-pkg-desc (or (assq package package-alist)
-                               (assq package package--builtins)))
-           (newest-pkg-desc (assq package package-archive-contents)))
-      (and local-pkg-desc newest-pkg-desc
-           (version-list-= (package-desc-vers (cdr local-pkg-desc))
-                           (package-desc-vers (cdr newest-pkg-desc)))))))
+    (let* ((get-desc (if (version< emacs-version "24.4") 'cdr 'cadr))
+           (builtin-version  (assq package package--builtin-versions))
+           (local-pkg-desc   (assq package package-alist))
+           (newest-pkg-desc  (assq package package-archive-contents)))
+      (cond ((and local-pkg-desc newest-pkg-desc)
+             (version-list-= (package-desc-version
+                              (funcall get-desc local-pkg-desc))
+                             (package-desc-version 
+                              (funcall get-desc newest-pkg-desc))))
+            ((and builtin-version newest-pkg-desc)
+             (version-list-= builtin-version
+                             (package-desc-version 
+                              (funcall get-desc newest-pkg-desc))))))))
 
 ;; Let's write a function to install a package if it is not installed or
 ;;    upgrades it if a new version has been released. Here our predicate comes
@@ -61,9 +84,11 @@ PACKAGE is installed and the current version is deleted."
   (unless (newest-package-installed-p package)
     (let ((pkg-desc (assq package package-alist)))
       (when pkg-desc
-        (package-delete (symbol-name package)
-                        (package-version-join
-                         (package-desc-vers (cdr pkg-desc)))))
+        (if (version< emacs-version "24.4")
+            (package-delete (symbol-name package)
+                            (package-version-join
+                             (package-desc-vers (cdr pkg-desc))))
+          (package-delete pkg-desc)))
       (and (assq package package-archive-contents)
            (package-install package)))))
 
@@ -134,6 +159,7 @@ PACKAGE is installed and the current version is deleted."
             auto-complete-clang  ; Auto Completion source for clang for GNU Emacs
             autopair             ; Automagically pair braces and quotes like TextMate
             babel                ; interface to web translation services such as Babelfish
+            batch-mode           ; ms dos batch file mode
             bbdb                 ; The Insidious Big Brother Database for GNU Emacs
             boxquote             ; Quote text with a semi-box
             csharp-mode          ; C# mode
@@ -224,8 +250,7 @@ PACKAGE is installed and the current version is deleted."
 (setq-default fill-column 76                    ; Maximum line width.
               indent-tabs-mode nil              ; Use spaces instead of tabs.
               split-width-threshold 100         ; Split verticly by default.
-              save-place t                      ;
-              auto-fill-function 'do-auto-fill) ; Auto-fill-mode everywhere.
+              save-place t)
 
 ;; The =load-path= specifies where Emacs should look for =.el=-files (or
 ;;    Emacs lisp files). I have a directory called =site-lisp= where I keep all
@@ -246,16 +271,16 @@ PACKAGE is installed and the current version is deleted."
 ;;    directory.
 
 (defvar emacs-autosave-directory
-  (concat user-emacs-directory "autosaves/")
-  "This variable dictates where to put auto saves. It is set to a
-  directory called autosaves located wherever your .emacs.d/ is
-  located.")
+    (concat user-emacs-directory "autosaves/")
+    "This variable dictates where to put auto saves. It is set to a
+    directory called autosaves located wherever your .emacs.d/ is
+    located.")
 
-;; Sets all files to be backed up and auto saved in a single directory.
-(setq backup-directory-alist
-      `((".*" . ,emacs-autosave-directory))
-      auto-save-file-name-transforms
-      `((".*" ,emacs-autosave-directory t)))
+  ;; Sets all files to be backed up and auto saved in a single directory.
+  (setq backup-directory-alist
+        `((".*" . ,emacs-autosave-directory))
+        auto-save-file-name-transforms
+        `((".*" ,emacs-autosave-directory t)))
 
 (setq  backup-by-copying t      ; don't clobber symlinks
        delete-old-versions t
@@ -335,19 +360,24 @@ PACKAGE is installed and the current version is deleted."
 ;;    default.
 
 (dolist (mode
-         '(abbrev-mode                ; E.g. sopl -> System.out.println.
-           column-number-mode         ; Show column number in mode line.
-           line-number-mode           ; Show line number in mode line.
-           delete-selection-mode      ; Replace selected text.
-           recentf-mode               ; Recently opened files.
-           show-paren-mode            ; Highlight matching parentheses.
-           cua-mode                   ; Support for marking a rectangle of text with highlighting.
-           global-ede-mode            ; Enable EDE mode globally
-           global-undo-tree-mode))    ; Undo as a tree.
-  (funcall mode 1))
+              '(abbrev-mode                ; E.g. sopl -> System.out.println.
+                column-number-mode         ; Show column number in mode line.
+                line-number-mode           ; Show line number in mode line.
+                delete-selection-mode      ; Replace selected text.
+                recentf-mode               ; Recently opened files.
+                show-paren-mode            ; Highlight matching parentheses.
+                cua-mode                   ; Support for marking a rectangle of text with highlighting.
+                global-ede-mode            ; Enable EDE mode globally
+))    ; Undo as a tree.
+       (funcall mode 1))
 
-(eval-after-load 'auto-compile
-  '((auto-compile-on-save-mode 1)))   ; compile .el files on save.
+     (when (version< emacs-version "24.4")
+       (eval-after-load 'auto-compile
+         '((auto-compile-on-save-mode 1))))  ; compile .el files on save.
+
+;; This makes =.md=-files open in =markdown-mode=.
+
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
 ;; Visual
 
@@ -1102,28 +1132,26 @@ s o that the appropriate emacs mode is selected according to the file extension.
 
 ;; Flyspell
 
-;;    Flyspell offers on-the-fly spell checking. We can enable flyspell
-;;    for all text-modes with this snippet.
+;;    Flyspell offers on-the-fly spell checking. We can enable flyspell for all
+;;    text-modes with this snippet.
 
 ;; TODO: Enable it after checking why flyspell binary is not working
 ;;(add-hook 'text-mode-hook 'turn-on-flyspell)
 
-;; To use flyspell for programming there is =flyspell-prog-mode=, that
-;;    only enables spell checking for comments and strings. We can enable
-;;    it for all programming modes using the =prog-mode-hook=. Flyspell
-;;    interferes with auto-complete mode, but there is a workaround
-;;    provided by auto complete.
+;; To use flyspell for programming there is =flyspell-prog-mode=, that only
+;;    enables spell checking for comments and strings. We can enable it for all
+;;    programming modes using the =prog-mode-hook=. Flyspell interferes with
+;;    auto-complete mode, but there is a workaround provided by auto complete.
 
 ;;(add-hook 'prog-mode-hook 'flyspell-prog-mode)
 ;;(eval-after-load 'auto-complete
 ;;  '(ac-flyspell-workaround))
 
-;; When working with several languages, we should be able to cycle
-;;    through the languages we most frequently use. Every buffer should
-;;    have a separate cycle of languages, so that cycling in one buffer
-;;    does not change the state in a different buffer (this problem
-;;    occurs if you only have one global cycle). We can implement this by
-;;    using a [[http://www.gnu.org/software/emacs/manual/html_node/elisp/Closures.html][closure]].
+;; When working with several languages, we should be able to cycle through
+;;    the languages we most frequently use. Every buffer should have a separate
+;;    cycle of languages, so that cycling in one buffer does not change the
+;;    state in a different buffer (this problem occurs if you only have one
+;;    global cycle). We can implement this by using a [[http://www.gnu.org/software/emacs/manual/html_node/elisp/Closures.html][closure]].
 
 (defun cycle-languages ()
   "Changes the ispell dictionary to the first element in
@@ -1138,22 +1166,20 @@ the languages in ISPELL-LANGUAGES when invoked."
        (car (setq ispell-languages (cdr ispell-languages)))))))
 
 ;; =Flyspell= signals an error if there is no spell-checking tool is
-;;    installed. We can advice =turn-on=flyspell= and =flyspell-prog-mode= to
+;;    installed. We can advice =turn-on-flyspell= and =flyspell-prog-mode= to
 ;;    only try to enable =flyspell= if a spell-checking tool is available. Also
 ;;    we want to enable cycling the languages by typing =C-c l=, so we bind the
 ;;    function returned from =cycle-languages=.
 
-(defadvice turn-on-flyspell (around check nil activate)
+(defadvice turn-on-flyspell (before check nil activate)
   "Turns on flyspell only if a spell-checking tool is installed."
   (when (executable-find ispell-program-name)
-    (local-set-key (kbd "C-c l") (cycle-languages))
-    ad-do-it))
+    (local-set-key (kbd "C-c l") (cycle-languages))))
 
-(defadvice flyspell-prog-mode (around check nil activate)
+(defadvice flyspell-prog-mode (before check nil activate)
   "Turns on flyspell only if a spell-checking tool is installed."
   (when (executable-find ispell-program-name)
-    (local-set-key (kbd "C-c l") (cycle-languages))
-    ad-do-it))
+    (local-set-key (kbd "C-c l") (cycle-languages))))
 
 ;; Org
 
@@ -1175,14 +1201,19 @@ the languages in ISPELL-LANGUAGES when invoked."
     (when f
       (find-file f))))
 
-;; =just-one-space= removes all whitespace around a point - giving it
-;;    a negative argument it removes newlines as well. We wrap a
-;;    interactive function around it to be able to bind it to a key.
+;; =just-one-space= removes all whitespace around a point - giving it a
+;;    negative argument it removes newlines as well. We wrap a interactive
+;;    function around it to be able to bind it to a key. In Emacs 24.4
+;;    =cycle-spacing= was introduced, and it works like just one space, but
+;;    when run in succession it cycles between one, zero and the original
+;;    number of spaces.
 
-(defun remove-whitespace-inbetween ()
+(defun cycle-spacing-delete-newlines ()
   "Removes whitespace before and after the point."
   (interactive)
-  (just-one-space -1))
+  (if (version< emacs-version "24.4")
+      (just-one-space -1)
+    (cycle-spacing -1)))
 
 ;; This interactive function switches you to a =shell=, and if
 ;;    triggered in the shell it switches back to the previous buffer.
@@ -1198,7 +1229,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;    function.
 
 (defun duplicate-thing ()
-  "Ethier duplicates the line or the region"
+  "Duplicates the current line, or the region if active."
   (interactive)
   (save-excursion
     (let ((start (if (region-active-p) (region-beginning) (point-at-bol)))
