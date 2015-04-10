@@ -155,8 +155,6 @@ PACKAGE is installed and the current version is deleted."
             ace-jump-mode        ; quick cursor location minor mode
             apel                 ; Needed for wanderlust, bbdb etc
             auto-compile         ; automatically compile Emacs Lisp libraries
-            auto-complete        ; auto completion
-            auto-complete-clang  ; Auto Completion source for clang for GNU Emacs
             autopair             ; Automagically pair braces and quotes like TextMate
             babel                ; interface to web translation services such as Babelfish
             batch-mode           ; ms dos batch file mode
@@ -219,7 +217,6 @@ PACKAGE is installed and the current version is deleted."
 ;;    but is not a high priority.
 
 (require 'idle-require)             ; Need in order to use idle-require
-(require 'auto-complete-config)     ; a configuration for auto-complete-mode
 
 (dolist (feature
          '(auto-compile             ; auto-compile .el files
@@ -303,11 +300,6 @@ PACKAGE is installed and the current version is deleted."
 (put 'narrow-to-defun 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
-
-;; Call =auto-complete= default configuration, which enables =auto-complete=
-;;    globally.
-
-(eval-after-load 'auto-complete-config `(ac-config-default))
 
 ;; Open read only files in view mode
 

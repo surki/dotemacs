@@ -189,8 +189,6 @@
                  ace-jump-mode        ; quick cursor location minor mode
                  apel                 ; Needed for wanderlust, bbdb etc
                  auto-compile         ; automatically compile Emacs Lisp libraries
-                 auto-complete        ; auto completion
-                 auto-complete-clang  ;	Auto Completion source for clang for GNU Emacs
                  autopair             ; Automagically pair braces and quotes like TextMate
                  babel                ; interface to web translation services such as Babelfish
                  batch-mode           ; ms dos batch file mode
@@ -255,7 +253,6 @@
 
    #+BEGIN_SRC emacs-lisp
      (require 'idle-require)             ; Need in order to use idle-require
-     (require 'auto-complete-config)     ; a configuration for auto-complete-mode
 
      (dolist (feature
               '(auto-compile             ; auto-compile .el files
@@ -356,13 +353,6 @@
    (put 'narrow-to-defun 'disabled nil)
    (put 'narrow-to-page 'disabled nil)
    (put 'narrow-to-region 'disabled nil)
-   #+END_SRC
-
-   Call =auto-complete= default configuration, which enables =auto-complete=
-   globally.
-
-   #+BEGIN_SRC emacs-lisp
-     (eval-after-load 'auto-complete-config `(ac-config-default))
    #+END_SRC
 
    Open read only files in view mode
