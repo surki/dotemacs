@@ -167,6 +167,7 @@ PACKAGE is installed and the current version is deleted."
             flx-ido              ; flx integration for ido
             git-timemachine      ; Walk through git revisions of a file
             ggtags               ; emacs frontend to GNU Global source code tagging system
+            go-mode              ; Go lang mode
             htmlize              ; Convert buffer text and decorations to HTML
             hungry-delete        ; hungry delete minor mode
             icicles              ; icicles
@@ -189,6 +190,7 @@ PACKAGE is installed and the current version is deleted."
             powershell           ; run powershell as an inferior shell in emacs    20130824.1206           wiki    705
             powershell-mode      ; Mode for editing Powershell scripts
             recentf-ext          ; Recentf extensions
+            rust-mode            ; Rust mode
             smex                 ; M-x interface with Ido-style fuzzy matching.
             switch-window        ; A *visual* way to choose a window to switch to
             undo-tree            ; Treat undo history as a tree
