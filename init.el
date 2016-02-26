@@ -39,10 +39,8 @@ tangled, and the tangled file is compiled."
 ;;    Common Lisp, and comes in handy quite often, so we want to make sure it's
 ;;    loaded, along with =package=, which is obviously needed.
 
-(prefer-coding-system 'utf-8)
 (require 'cl)
 (require 'package)
-(setq package-enable-at-startup nil)
 (package-initialize)
 
 ;; Packages can be fetched from different mirrors, [[http://melpa.milkbox.net/#/][melpa]] is the largest
@@ -51,106 +49,13 @@ tangled, and the tangled file is compiled."
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
         ("org" . "http://orgmode.org/elpa/")
-        ("MELPA" . "http://melpa.org/packages/")
-        ("e6h" . "http://e6h.org/packages/")))
+        ("melpa" . "https://melpa.org/packages/")
+        ("melpa-stable" . "https://stable.melpa.org/packages/")))
 
-;; We can define a predicate that tells us whether or not the newest version
-;;    of a package is installed.
+;; The configuration assumes that the packages listed below are
+;;    installed. To ensure we install missing packages if they are missing.
 
-(defun newest-package-installed-p (package)
-  "Return true if the newest available PACKAGE is installed."
-  (when (package-installed-p package)
-    (let* ((get-desc (if (version< emacs-version "24.4") 'cdr 'cadr))
-           (builtin-version  (assq package package--builtin-versions))
-           (local-pkg-desc   (assq package package-alist))
-           (newest-pkg-desc  (assq package package-archive-contents)))
-      (cond ((and local-pkg-desc newest-pkg-desc)
-             (version-list-= (package-desc-version
-                              (funcall get-desc local-pkg-desc))
-                             (package-desc-version 
-                              (funcall get-desc newest-pkg-desc))))
-            ((and builtin-version newest-pkg-desc)
-             (version-list-= builtin-version
-                             (package-desc-version 
-                              (funcall get-desc newest-pkg-desc))))))))
-
-;; Let's write a function to install a package if it is not installed or
-;;    upgrades it if a new version has been released. Here our predicate comes
-;;    in handy.
-
-(defun upgrade-or-install-package (package)
-  "Unless the newest available version of PACKAGE is installed
-PACKAGE is installed and the current version is deleted."
-  (unless (newest-package-installed-p package)
-    (let ((pkg-desc (assq package package-alist)))
-      (when pkg-desc
-        (if (version< emacs-version "24.4")
-            (package-delete (symbol-name package)
-                            (package-version-join
-                             (package-desc-vers (cdr pkg-desc))))
-          (package-delete pkg-desc)))
-      (and (assq package package-archive-contents)
-           (package-install package)))))
-
-;; Also, we will need a function to find all dependencies from a given package.
-
-(defun dependencies (package)
-  "Returns a list of dependencies from a given PACKAGE."
-  (let* ((pkg-desc (assq package package-alist))
-         (reqs (and pkg-desc (package-desc-reqs (cdr pkg-desc)))))
-    (mapcar 'car reqs)))
-
-;; The =package-refresh-contents= function downloads archive descriptions,
-;;    this is a major bottleneck in this configuration. To avoid this we can
-;;    try to only check for updates once every day or so. Here are three
-;;    variables. The first specifies how often we should check for updates. The
-;;    second specifies whether one should update during the initialization. The
-;;    third is a path to a file where a time-stamp is stored in order to check
-;;    when packages were updated last.
-
-(defvar days-between-updates 7)
-(defvar do-package-update-on-init t)
-(defvar package-last-update-file
-  (expand-file-name (concat user-emacs-directory ".package-last-update")))
-
-;; The tricky part is figuring out when packages were last updated. Here is
-;;    a hacky way of doing it, using [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Time-Stamps.html][time-stamps]]. By adding a time-stamp to the
-;;    a file, we can determine whether or not to do an update. After that we
-;;    must run the =time-stamp=-function to update the time-stamp.
-
-(require 'time-stamp)
-;; Open the package-last-update-file
-(with-temp-file package-last-update-file
-  (if (file-exists-p package-last-update-file)
-      (progn
-        ;; Insert it's original content's.
-        (insert-file-contents package-last-update-file)
-        (let ((start (re-search-forward time-stamp-start nil t))
-              (end (re-search-forward time-stamp-end nil t)))
-          (when (and start end)
-            ;; Assuming we have found a time-stamp, we check determine if it's
-            ;; time to update.
-            (setq do-package-update-on-init
-                  (<= days-between-updates
-                      (days-between
-                       (current-time-string)
-                       (buffer-substring-no-properties start end))))
-            ;; Remember to update the time-stamp.
-            (when do-package-update-on-init
-              (time-stamp)))))
-    ;; If no such file exists it is created with a time-stamp.
-    (insert "Time-stamp: <>")
-    (time-stamp)))
-
-;; Now we can use the function above to make sure packages are installed and
-;;    up to date. Here are some packages I find useful (some of these
-;;    configurations are also dependent on them).
-
-(when (and do-package-update-on-init
-           (y-or-n-p "Update all packages?"))
-  (package-refresh-contents)
-
-  (let* ((packages
+(let* ((packages
           '(
             ace-jump-mode        ; quick cursor location minor mode
             apel                 ; Needed for wanderlust, bbdb etc
@@ -187,8 +92,7 @@ PACKAGE is installed and the current version is deleted."
             paredit              ; minor mode for editing parentheses
             php-mode             ; Major mode for editing PHP code
             powerline            ; Rewrite of Powerline
-            powershell           ; run powershell as an inferior shell in emacs    20130824.1206           wiki    705
-            powershell-mode      ; Mode for editing Powershell scripts
+            powershell           ; run powershell as an inferior shell in emacs
             recentf-ext          ; Recentf extensions
             rust-mode            ; Rust mode
             smex                 ; M-x interface with Ido-style fuzzy matching.
@@ -196,18 +100,14 @@ PACKAGE is installed and the current version is deleted."
             undo-tree            ; Treat undo history as a tree
             wanderlust           ; Wanderlust, email client
           ))
-         ;; Fetch dependencies from all packages.
-         (reqs (mapcar 'dependencies packages))
-         ;; Append these to the original list, and remove any duplicates.
-         (packages (delete-dups (apply 'append packages reqs))))
-
-    (dolist (package packages)
-      (upgrade-or-install-package package)))
-
-  ;; This package is only relevant for Mac OS X.
-  (when (memq window-system '(mac ns))
-    (upgrade-or-install-package 'exec-path-from-shell))
-  (package-initialize))
+     ;; Remove all packages already installed
+     (packages (remove-if 'package-installed-p packages)))
+(when packages
+  (ignore-errors (package-refresh-contents)
+                 (mapcar 'package-install packages)
+                 ;; This package is only relevant for Mac OS X.
+                 (when (memq window-system '(mac ns))
+                   (package-install 'exec-path-from-shell)))))
 
 ;; Require
 
