@@ -1938,8 +1938,8 @@
   last time and re-opens them again in startup
 
   #+BEGIN_SRC emacs-lisp
+    (require 'desktop)
     (setq desktop-save-mode 1            ; Desktop save mode   
           desktop-load-locked-desktop t)
-    (desktop-read)
   #+END_SRC
 

@@ -1720,6 +1720,6 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;   Enable desktop save mode. This remembers list of buffers that were open
 ;;   last time and re-opens them again in startup
 
+(require 'desktop)
 (setq desktop-save-mode 1            ; Desktop save mode   
       desktop-load-locked-desktop t)
-(desktop-read)
