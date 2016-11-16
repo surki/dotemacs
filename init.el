@@ -99,6 +99,10 @@ tangled, and the tangled file is compiled."
             switch-window        ; A *visual* way to choose a window to switch to
             undo-tree            ; Treat undo history as a tree
             wanderlust           ; Wanderlust, email client
+            strace-mode          ; strace output parsing mode
+            bm                   ; visible bookmark mode
+            projectile           ; projectile mode for project management
+            go-gopath            ; Guess GOPATH from projectile
           ))
      ;; Remove all packages already installed
      (packages (remove-if 'package-installed-p packages)))
@@ -220,10 +224,10 @@ tangled, and the tangled file is compiled."
 (setq semanticdb-default-save-directory "~/.semantic")
 '(semanticdb-persistent-path nil)
 
-;; Use conkeror as browser
+;; Use firefox as browser
 
 (setq browse-url-browser-function 'browse-url-generic
-   browse-url-generic-program "conkeror")
+   browse-url-generic-program "firefox")
 
 ;; Diff options
 
@@ -577,8 +581,8 @@ tangled, and the tangled file is compiled."
 
 ;; Configure BBDB to manage Email addresses
 
-(require 'bbdb-wl)
-(bbdb-wl-setup)
+;(require 'bbdb-wl)
+;(bbdb-wl-setup)
  
 (setq
       bbdb-use-pop-up nil ;; Allow pop-ups
@@ -978,7 +982,7 @@ s o that the appropriate emacs mode is selected according to the file extension.
         (message "Message re-filled"))
     (message "No message to re-fill")))
  
-(define-key wl-summary-mode-map "\M-q" 'wl-summary-refill-message)
+;(define-key wl-summary-mode-map "\M-q" 'wl-summary-refill-message)
 
 ;; BBDB
 ;;    TODO: Document later
@@ -1630,6 +1634,12 @@ the languages in ISPELL-LANGUAGES when invoked."
 (autoload 'idomenu "idomenu" "Ido menu to list the functions in the current buffer" t)
 (global-set-key "\C-ci" 'idomenu) ; or any key you see fit
 
+;; Enable visible bookmark mode
+
+(global-set-key (kbd "<C-f2>") 'bm-toggle)
+(global-set-key (kbd "<f2>")   'bm-next)
+(global-set-key (kbd "<S-f2>") 'bm-previous)
+
 ;; C, C++, C# and Java
 
 ;;    The =c-mode-common-hook= is a general hook that work on all C-like
@@ -1696,6 +1706,28 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 (if (eq system-type 'windows-nt)
     (require 'powershell))
+
+;; Go
+
+(defun my-go-mode-hook ()
+    ; Call Gofmt before saving
+    (add-hook 'before-save-hook 'gofmt-before-save)
+    ; Use goimports instead of go-fmt
+    (setq gofmt-command "goimports")
+    ; Call Gofmt before saving
+    (add-hook 'before-save-hook 'gofmt-before-save)
+    ; Customize compile command to run go build
+    (if (not (string-match "go" compile-command))
+    (set (make-local-variable 'compile-command)
+        "go build -v && go test -v && go vet"))
+    ; Godef jump key binding
+    (local-set-key (kbd "M-.") 'godef-jump)
+    (local-set-key (kbd "M-*") 'pop-tag-mark)
+    (local-set-key (kbd "C-c C-e") 'go-gopath-set-gopath))
+(add-hook 'go-mode-hook 'my-go-mode-hook)
+(require 'go-gopath)
+(require 'go-guru)
+(add-hook 'go-mode-hook #'go-guru-hl-identifier-mode)
 
 ;; Makefile
    
