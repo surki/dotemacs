@@ -1,4 +1,3 @@
-
 ;; Meta
 
 ;;    Emacs can only load =.el=-files. We can use =C-c C-v t= to run
@@ -8,6 +7,7 @@
 ;;    To avoid doing this each time a change is made we can add a function to
 ;;    the =after-save-hook= ensuring to always tangle and byte-compile the
 ;;    =org=-document after changes.
+
 
 (defun tangle-init ()
   "If the current buffer is 'init.org' the code-blocks are
@@ -21,8 +21,11 @@ tangled, and the tangled file is compiled."
 
 (add-hook 'after-save-hook 'tangle-init)
 
+
+
 ;; I'd like to keep a few settings private, so we load a =private.el= if it
-;;    exists after the init-file has loaded.
+;; exists after the init-file has loaded.
+
 
 (add-hook
  'after-init-hook
@@ -39,12 +42,16 @@ tangled, and the tangled file is compiled."
 ;;    Common Lisp, and comes in handy quite often, so we want to make sure it's
 ;;    loaded, along with =package=, which is obviously needed.
 
+
 (require 'cl)
 (require 'package)
 (package-initialize)
 
+
+
 ;; Packages can be fetched from different mirrors, [[http://melpa.milkbox.net/#/][melpa]] is the largest
-;;    archive and is well maintained.
+;; archive and is well maintained.
+
 
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
@@ -52,8 +59,11 @@ tangled, and the tangled file is compiled."
         ("melpa" . "https://melpa.org/packages/")
         ("melpa-stable" . "https://stable.melpa.org/packages/")))
 
+
+
 ;; The configuration assumes that the packages listed below are
-;;    installed. To ensure we install missing packages if they are missing.
+;; installed. To ensure we install missing packages if they are missing.
+
 
 (let* ((packages
           '(
@@ -66,33 +76,37 @@ tangled, and the tangled file is compiled."
             bbdb                 ; The Insidious Big Brother Database for GNU Emacs
             boxquote             ; Quote text with a semi-box
             csharp-mode          ; C# mode
+            clang-format         ; clang-format
             dtrt-indent          ; Adapt to foreign indentation offsets
             elscreen             ; Emacs window session manager
             expand-region        ; Increase selected region by semantic units
             flx-ido              ; flx integration for ido
             git-timemachine      ; Walk through git revisions of a file
             ggtags               ; emacs frontend to GNU Global source code tagging system
+            go-dlv               ; go dlv gud debugger
             go-mode              ; Go lang mode
+            highlight-indentation; Highlight based on indentation (yaml etc)
             htmlize              ; Convert buffer text and decorations to HTML
-            hungry-delete        ; hungry delete minor mode
+            hungry-delete	      ; hungry delete minor mode
             icicles              ; icicles
             idle-require         ; load elisp libraries while Emacs is idle
-            ido-ubiquitous       ; Use ido (nearly) everywhere.
+            ido-ubiquitous	      ; Use ido (nearly) everywhere.
             ido-vertical-mode    ; Makes ido-mode display vertically.
             idomenu              ; imenu tag selection a la ido
+            indent-tools         ; Package for indentation and navigation
             js2-mode             ; Improved JavaScript editing mode
             lua-mode             ; a major-mode for editing Lua scripts
             magit                ; control Git from Emacs
             markdown-mode        ; Emacs Major mode for Markdown-formatted files.
-            maxframe             ; maximize the emacs frame based on display size
+            maxframe	      ; maximize the emacs frame based on display size
             mediawiki            ; mediawiki frontend
             move-text            ; Move current line or region with M-up or M-down
             multiple-cursors     ; Multiple cursors for Emacs.
             org                  ; Outline-based notes management and organizer
             paredit              ; minor mode for editing parentheses
-            php-mode             ; Major mode for editing PHP code
+            php-mode	      ; Major mode for editing PHP code
             powerline            ; Rewrite of Powerline
-            powershell           ; run powershell as an inferior shell in emacs
+            powershell	      ; run powershell as an inferior shell in emacs
             recentf-ext          ; Recentf extensions
             rust-mode            ; Rust mode
             smex                 ; M-x interface with Ido-style fuzzy matching.
@@ -103,6 +117,9 @@ tangled, and the tangled file is compiled."
             bm                   ; visible bookmark mode
             projectile           ; projectile mode for project management
             go-gopath            ; Guess GOPATH from projectile
+            protobuf-mode        ; Protobuf mode
+            highlight-current-line ; Highlight current line
+            default-text-scale   ; Font size adjust globally
           ))
      ;; Remove all packages already installed
      (packages (remove-if 'package-installed-p packages)))
@@ -122,6 +139,7 @@ tangled, and the tangled file is compiled."
 ;;    Emacs is in idle. So this is great for stuff you eventually want to load,
 ;;    but is not a high priority.
 
+
 (require 'idle-require)             ; Need in order to use idle-require
 
 (dolist (feature
@@ -136,6 +154,7 @@ tangled, and the tangled file is compiled."
 
 ;; Sane defaults
 
+
 (setq inhibit-splash-screen t        ; No splash screen please.
       initial-scratch-message nil   ; Clean scratch buffer.
       ring-bell-function 'ignore    ; Quiet.
@@ -146,32 +165,44 @@ tangled, and the tangled file is compiled."
 (when (boundp 'mac-pass-command-to-system)
   (setq mac-pass-command-to-system nil))
 
+
+
 ;; Some variables are buffer-local, so changing them using =setq= will only
-;;    change them in a single buffer. Using =setq-default= we change the
-;;    buffer-local variable's default value.
+;; change them in a single buffer. Using =setq-default= we change the
+;; buffer-local variable's default value.
+
 
 (setq-default fill-column 76                    ; Maximum line width.
               indent-tabs-mode nil              ; Use spaces instead of tabs.
               split-width-threshold 100         ; Split verticly by default.
               save-place t)
 
+
+
 ;; The =load-path= specifies where Emacs should look for =.el=-files (or
-;;    Emacs lisp files). I have a directory called =site-lisp= where I keep all
-;;    extensions that have been installed manually (these are mostly my own
-;;    projects).
+;; Emacs lisp files). I have a directory called =site-lisp= where I keep all
+;; extensions that have been installed manually (these are mostly my own
+;; projects).
+
 
 (let ((default-directory (concat user-emacs-directory "site-lisp/")))
   (when (file-exists-p default-directory)
     (normal-top-level-add-to-load-path '("."))
     (normal-top-level-add-subdirs-to-load-path)))
 
+
+
 ;; Answering /yes/ and /no/ to each question from Emacs can be tedious, a
-;;    single /y/ or /n/ will suffice.
+;; single /y/ or /n/ will suffice.
+
 
 (fset 'yes-or-no-p 'y-or-n-p)
 
+
+
 ;; To avoid file system clutter we put all auto saved files in a single
-;;    directory.
+;; directory.
+
 
 (defvar emacs-autosave-directory
     (concat user-emacs-directory "autosaves/")
@@ -191,57 +222,90 @@ tangled, and the tangled file is compiled."
        kept-old-versions 2
        version-control t)       ; use versioned backups
 
+
+
 ;; F1 is the man page key
+
 
 (global-set-key [f1] 'manual-entry)
 
+
+
 ;; Set =utf-8= as preferred coding system.
+
 
 (set-language-environment "UTF-8")
 
+
+
 ;; By default the =narrow-to-region= command is disabled and issues a
-;;    warning, because it might confuse new users. I find it useful sometimes,
-;;    and don't want to be warned.
+;; warning, because it might confuse new users. I find it useful sometimes,
+;; and don't want to be warned.
+
 
 (put 'narrow-to-defun 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
 
+
+
 ;; Open read only files in view mode
+
 
 (setq view-read-only t)
 
+
+
 ;; Scrollbar right side
+
 
 (set-scroll-bar-mode 'right)
 
+
+
 ;; Customize output goes here
+
 
 (setq custom-file "~/.emacs.d/site-lisp/sk-custom.el")
 
+
+
 ;; Semantic DB path
+
 
 (setq semanticdb-default-save-directory "~/.semantic")
 '(semanticdb-persistent-path nil)
 
+
+
 ;; Use firefox as browser
+
 
 (setq browse-url-browser-function 'browse-url-generic
    browse-url-generic-program "firefox")
 
+
+
 ;; Diff options
+
 
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 (setq ediff-split-window-function 'split-window-horizontally)
 (setq diff-switches "-u")
 
+
+
 ;; Enable GPG
+
 
 (epa-file-enable)
 
-;; Set default fon
 
-(set-default-font "Courier New 12")
+
+;; Set default font
+
+
+(set-default-font "Courier New 14")
 
 ;; Modes
 
@@ -249,13 +313,17 @@ tangled, and the tangled file is compiled."
 ;;    particularly useful. We create a list of these modes, and disable all of
 ;;    these.
 
+
 (dolist (mode
          '(tool-bar-mode                ; No toolbars, more room for text.
            blink-cursor-mode))          ; The blinking cursor gets old.
   (funcall mode 0))
 
+
+
 ;; Let's apply the same technique for enabling modes that are disabled by
-;;    default.
+;; default.
+
 
 (dolist (mode
               '(abbrev-mode                ; E.g. sopl -> System.out.println.
@@ -273,14 +341,18 @@ tangled, and the tangled file is compiled."
        (eval-after-load 'auto-compile
          '((auto-compile-on-save-mode 1))))  ; compile .el files on save.
 
+
+
 ;; This makes =.md=-files open in =markdown-mode=.
+
 
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
 ;; Visual
 
 ;;    [[https://github.com/milkypostman/powerline][Powerline]] is an extension to customize the mode line. This is modified
-;;    version =powerline-nano-theme=.
+;;    version =powerline-nano-theme=. 
+
 
 ;;(setq-default
 ;; mode-line-format
@@ -314,6 +386,7 @@ tangled, and the tangled file is compiled."
 ;;    possibilities. Using =ido-vertical-mode= changes the way possibilities
 ;;    are displayed, and =flx-ido-mode= enables fuzzy matching.
 
+
 (dolist (mode
          '(ido-mode                   ; Interactivly do.
            ido-everywhere             ; Use Ido for all buffer/file reading.
@@ -321,19 +394,28 @@ tangled, and the tangled file is compiled."
            flx-ido-mode))             ; Toggle flx ido mode.
   (funcall mode 1))
 
+
+
 ;; We can set the order of file selections in =ido=. I prioritize source
-;;    files along with =org=- and =tex=-files.
+;; files along with =org=- and =tex=-files.
+
 
 (setq ido-file-extensions-order
       '(".el" ".scm" ".lisp" ".java" ".c" ".h" ".org" ".tex"))
 
+
+
 ;; Sometimes when using =ido-switch-buffer= the =*Messages*= buffer get in
-;;    the way, so we set it to be ignored (it can be accessed using =C-h e=, so
-;;    there is really no need for it in the buffer list).
+;; the way, so we set it to be ignored (it can be accessed using =C-h e=, so
+;; there is really no need for it in the buffer list).
+
 
 ;(add-to-list 'ido-ignore-buffers "*Messages*")
 
+
+
 ;; Other Ido mode configurations
+
 
 (setq ido-everywhere t    ;; Use it for many file dialogs
       ido-case-fold t ;; Don't be case sensitive
@@ -344,7 +426,7 @@ tangled, and the tangled file is compiled."
       ido-enable-flex-matching t
       ido-create-new-buffer 'always
       ido-ignore-extensions t)
- 
+
 (add-hook 'ido-setup-hook
           (lambda ()
             (define-key ido-completion-map
@@ -355,14 +437,20 @@ tangled, and the tangled file is compiled."
 (add-to-list 'completion-ignored-extensions ".dep")
 (add-to-list 'completion-ignored-extensions ".d")
 
+
+
 ;; To make =M-x= behave more like =ido-mode= we can use the =smex=
-;;    package. It needs to be initialized, and we can replace the binding to
-;;    the standard =execute-extended-command= with =smex=.
+;; package. It needs to be initialized, and we can replace the binding to
+;; the standard =execute-extended-command= with =smex=.
+
 
 (smex-initialize)
 (global-set-key (kbd "M-x") 'smex)
 
+
+
 ;; Integrate ido with artist-mode
+
 
 (defun artist-ido-select-operation (type)
   "Use ido to select a drawing operation in artist-mode"
@@ -374,7 +462,7 @@ tangled, and the tangled file is compiled."
                                                 "cut rectangle" "cut square" "copy rectangle" "copy square"
                                                 "paste" "flood-fill"))))
   (artist-select-operation type))
- 
+
 (defun artist-ido-select-settings (type)
   "Use ido to select a setting to change in artist-mode"
   (interactive (list (ido-completing-read "Setting: "
@@ -390,7 +478,7 @@ tangled, and the tangled file is compiled."
                                             ("Trimming" . trimming)
                                             ("Borders" . borders)
                                             ("Spray-chars" . spray-chars))))))))
- 
+
 (add-hook 'artist-mode-init-hook
           (lambda ()
             (local-set-key (kbd "C-c C-a C-o") 'artist-ido-select-operation)
@@ -400,6 +488,7 @@ tangled, and the tangled file is compiled."
 
 ;;    Define a function to display week numbers in =calender-mode=. The snippet
 ;;    is from [[http://www.emacswiki.org/emacs/CalendarWeekNumbers][EmacsWiki]].
+
 
 (defun calendar-show-week (arg)
   "Displaying week number in calendar-mode."
@@ -417,11 +506,17 @@ tangled, and the tangled file is compiled."
                        (list month day year)))))
                'font-lock-face 'calendar-iso-week-face))))
 
+
+
 ;; Evaluate the =calendar-show-week= function.
+
 
 (calendar-show-week t)
 
+
+
 ;; Set Monday as the first day of the week.
+
 
 (setq calendar-week-start-day 1)
 
@@ -431,16 +526,20 @@ tangled, and the tangled file is compiled."
 
 ;;    Enable only when I run 'wl'
 
+
 ;; Autoload wanderlust on "wl"
 (autoload 'wl "wl" "Wanderlust" t)
 (autoload 'wl-other-frame "wl" "Wanderlust on new frame." t)
 (autoload 'wl-draft "wl-draft" "Write draft with Wanderlust." t)
 (autoload 'wl-user-agent-compose "wl-draft" "Compose with Wanderlust." t)
 ;;(autoload 'wl-user-agent-compose "wl-draft" nil t)
- 
+
 ;; (setq elmo-imap4-debug t)
 
+
+
 ;; Basic settings
+
 
 (setq wl-plugged t
       elmo-imap4-use-modified-utf7 t
@@ -451,22 +550,22 @@ tangled, and the tangled file is compiled."
       wl-insert-message-id nil
       wl-message-id-use-wl-from t
       wl-default-spec "%"
- 
+
       ;; Need a smaller user agent string
       wl-generate-mailer-string-function 'wl-generate-user-agent-string-1
       elmo-message-fetch-confirm t
       elmo-message-fetch-threshold 250000
       wl-fcc-force-as-read t
- 
+
       ;; Signature
       signature-insert-at-eof t
       signature-delete-blank-lines-at-eof t
- 
+
       wl-draft-always-delete-myself  t
       wl-draft-reply-buffer-style 'keep
       wl-interactive-send t
       wl-interactive-exit t
- 
+
       ;; Windows and decoration
       wl-folder-use-frame nil
       wl-highlight-body-too t
@@ -474,7 +573,7 @@ tangled, and the tangled file is compiled."
       wl-show-plug-status-on-modeline t
       wl-message-window-size '(1 . 4)
       )
- 
+
 ;; Use wanderlust for default compose-mail
 (if (boundp 'mail-user-agent)
     (setq mail-user-agent 'wl-user-agent))
@@ -486,28 +585,31 @@ tangled, and the tangled file is compiled."
       'wl-draft-kill
       'mail-send-hook))
 
+
+
 ;; Folder settings
+
 
 (setq wl-stay-folder-window t
       wl-folder-window-width 30
       wl-folder-desktop-name "Email"
       ;; wl-trash-folder ".Trash"
       wl-interactive-save-folders t
- 
+
       wl-use-petname t
       wl-folder-petname-alist nil
       wl-fldmgr-make-backup  t
       wl-fldmgr-sort-group-first  t
- 
+
       elmo-folder-update-confirm t
       elmo-folder-update-threshold 1000
- 
+
       wl-folder-check-async  t
       ;; FIX ME
       ;; wl-auto-check-folder-name 'none
       ;; wl-auto-check-folder-list '("^\\.")
       ;; wl-auto-uncheck-folder-list nil
- 
+
       wl-folder-notify-deleted t
       wl-fldmgr-add-complete-with-current-folder-list t
       wl-folder-info-save t
@@ -515,7 +617,10 @@ tangled, and the tangled file is compiled."
       wl-highlight-folder-by-numbers 1
       )
 
+
+
 ;; Summary view settings
+
 
 (setq wl-auto-select-next 'unread
       wl-summary-width nil
@@ -523,13 +628,16 @@ tangled, and the tangled file is compiled."
       ;;wl-summary-showto-folder-regexp ".Sent.*"
       ;;wl-summary-line-format "%n%T%P%M/%D(%W)%h:%m %t%[%17(%c %f%) %] %s"
       wl-summary-line-format "%n%T%P%M/%D(%W)%h:%m %[ %17f %]%[%1@%] %t%C%s"
- 
+
       ;; Summary threads
       wl-thread-insert-opened t
       wl-thread-open-reading-thread t
       )
 
+
+
 ;; Message settings
+
 
 (setq mime-view-mailcap-files '("~/.mailcap")
       wl-forward-subject-prefix "Fwd: "
@@ -544,7 +652,7 @@ tangled, and the tangled file is compiled."
         "^X-Mailer:"
         "^User-Agent:"
         )
- 
+
       wl-message-sort-field-list
       '("^From"
         "^Organization:"
@@ -553,16 +661,16 @@ tangled, and the tangled file is compiled."
         "^Date"
         "^To"
         "^Cc")
-      
+
       nobreak-char-display nil
-      
+
       ;; ;; Invert behaviour of with and without argument replies.
       ;; ;; just the author
       ;; wl-draft-reply-without-argument-list
       ;; '(("Reply-To" ("Reply-To") nil nil)
       ;;   ("Mail-Reply-To" ("Mail-Reply-To") nil nil)
       ;;   ("From" ("From") nil nil))
- 
+
       ;; ;; bombard the world
       ;; wl-draft-reply-with-argument-list
       ;; '(("Followup-To" nil nil ("Followup-To"))
@@ -579,59 +687,65 @@ tangled, and the tangled file is compiled."
         (type . application)(subtype . pdf)
         (method . my-mime-save-content-find-file)))))
 
+
+
 ;; Configure BBDB to manage Email addresses
+
 
 ;(require 'bbdb-wl)
 ;(bbdb-wl-setup)
- 
+
 (setq
       bbdb-use-pop-up nil ;; Allow pop-ups
       bbdb-pop-up-target-lines 1
- 
+
       ;; auto collection
       bbdb/mail-auto-create-p t
- 
+
       bbdb-auto-notes-alist '(("X-ML-Name" (".*$" ML 0)))
- 
+
       ;; get addresses only from these folders
       bbdb-wl-folder-regexp ".*Inbox.*\\|.*Sent.*|.*TKK.*"
       ;;bbdb-wl-ignore-folder-regexp "^@" ;; folders without auto collection
- 
+
       ;; FIX ME
       ;; bbdb-north-american-phone-numbers-p nil
       ;; bbdb-auto-notes-alist '(("X-ML-Name" (".*$" ML 0)))
       ;; bbdb-dwim-net-address-allow-redundancy t
- 
+
       ;; shows the name of bbdb in the summary
- 
+
       ;; Not with wl-summary-showto-folder-regexp
       ;;wl-summary-from-function 'bbdb-wl-from-func
       ;; Use the default:
       wl-summary-from-function 'wl-summary-default-from
- 
+
       ;; Using BBDB for pet names is OK
       wl-summary-get-petname-function 'bbdb-wl-get-petname
       )
 
+
+
 ;; Various hooks
+
 
 (add-hook
  'wl-init-hook
  '(lambda ()
     (run-with-idle-timer 30 t 'my-wl-auto-save-draft-buffers)
     ))
- 
+
 (add-hook
  'wl-folder-mode-hook
  '(lambda ()
     (hl-line-mode t)
     ))
- 
+
 (add-hook
  'wl-summary-mode-hook
  '(lambda ()
     (hl-line-mode t)
- 
+
     ;; Key bindings
     (local-set-key "D" 'wl-thread-delete)
     (local-set-key "b" 'wl-summary-resend-bounced-mail)
@@ -644,7 +758,7 @@ tangled, and the tangled file is compiled."
                       (wl-summary-reply-with-citation 1)))
     ;; (local-set-key "\M-m" 'mairix-search)
     ))
- 
+
 (add-hook
  'wl-summary-exec-hook
  '(lambda ()
@@ -652,13 +766,13 @@ tangled, and the tangled file is compiled."
     ;; operation
     (wl-summary-sync-update)
     ))
- 
+
 (add-hook
  'wl-message-buffer-created-hook
  '(lambda ()
     (setq truncate-lines nil) ;; Fold over-length lines
     ))
- 
+
 (add-hook
  'wl-draft-mode-hook
  '(lambda ()
@@ -667,15 +781,15 @@ tangled, and the tangled file is compiled."
     (local-set-key (kbd "<backtab>") 'bbdb-complete-name)
     ;; (define-key wl-draft-mode-map (kbd "<backtab>") 'bbdb-complete-name)))
     ))
- 
+
 ;; Check mail for subject and attachment before sending
 (add-hook 'wl-mail-send-pre-hook 'my-wl-draft-subject-check)
 (add-hook 'wl-mail-send-pre-hook 'my-wl-draft-attachment-check)
 ;; (add-hook 'wl-biff-notify-hook 'my-wl-mail-notification-hook)
- 
+
 ;; Add lots of goodies to the mail setup
 (add-hook 'wl-mail-setup-hook 'my-mail-setup)
- 
+
 (add-hook
  'mime-view-mode-hook
  '(lambda ()
@@ -699,22 +813,22 @@ Set the `j' key to run `mime-preview-quit'."
                            (wl-summary-sync)))
     (local-set-key [?t] 'babel-buffer)
     ))
- 
+
 ;; (add-hook
 ;;  'wl-biff-notify-hook
 ;;  '(lambda ()
 ;;     (my-wl-update-current-summaries)
 ;;     ))
- 
+
 ;; Automatically add mailing list fields
 ;; (add-hook 'bbdb-notice-hook 'bbdb-auto-notes-hook)
- 
+
 ;; Smilies
 (add-hook
  'wl-message-redisplay-hook
  '(lambda () (smiley-region (point-min) (point-max))
     ))
- 
+
 (add-hook
  'wl-draft-cited-hook
  '(lambda ()
@@ -722,21 +836,24 @@ Set the `j' key to run `mime-preview-quit'."
           (smiley-toggle-buffer -1))
      ))
 
+
+
 ;; Various customization (TODO: document later)
+
 
 (require 'boxquote)
 
 ( defun my-wl-draft-kill-force ()
    (interactive)
    (wl-draft-kill t))
-  
+
 ; ; (defun my-wl-delete-whole-folder ()
 ; ;   (interactive)
 ; ;   (wl-summary-target-mark-all)
 ; ;   (wl-summary-target-mark-delete)
 ; ;   (wl-summary-exec)
 ; ;   (wl-summary-exit))
-  
+
 ( defun my-wl-check-mail-primary ()
    (interactive)
    (unless (get-buffer wl-folder-buffer-name)
@@ -746,7 +863,7 @@ Set the `j' key to run `mime-preview-quit'."
    (goto-char (point-min))
    (next-line 1)
    (wl-folder-jump-to-current-entity))
-  
+
 ( defun my-wl-auto-save-draft-buffers ()
    (let ((buffers (wl-collect-draft)))
      (save-excursion
@@ -754,7 +871,7 @@ Set the `j' key to run `mime-preview-quit'."
          (set-buffer (car buffers))
          (if (buffer-modified-p) (wl-draft-save))
          (setq buffers (cdr buffers))))))
-  
+
 ( defun my-wl-update-current-summaries ()
    (let ((buffers (wl-collect-summary)))
      (while buffers
@@ -762,45 +879,45 @@ Set the `j' key to run `mime-preview-quit'."
          (save-excursion
            (wl-summary-sync-update)))
        (setq buffers (cdr buffers)))))
-  
+
 ; ; (defun my-wl-summary-delete-and-move-prev ()
 ; ;   (interactive)
 ; ;   (let (wl-summary-move-direction-downward)
 ; ;     (call-interactively 'wl-summary-delete)))
-  
+
 ( defun wl-rehilight ()
    "Re-highlight message."
    (let ((beg (point-min))
          (end (point-max)))
      (put-text-property beg end 'face nil)
      (wl-highlight-message beg end t)))
-  
+
 ( defun my-mail-setup ()
    "Set up appropriate modes for writing Email and clean-up citation for replies."
    (interactive)
-  
+
    ;; Fold over-length lines
    ;; (setq truncate-lines nil)
    ;; (turn-on-auto-fill)
    (flyspell-mode t)
-  
+
    ;; Apply template based on from address
    (unless wl-draft-reedit ; don't apply when reedit.
      (wl-draft-config-exec wl-draft-config-alist))
-  
+
    (remove-hook 'wl-draft-send-hook 'wl-draft-config-exec)
-  
+
    ;; Switch on the completion selection mode
    ;; and set the default completion-selection to bbdb
    ;; (completion-selection-mode t)
    ;; (completion-selection-set 'complete-bbdb)
-  
+
    ;; Clean up reply citation
    (save-excursion
      ;; Goto the beginning of the message body
      (mail-text)
      ))
-  
+
 ( defun my-mime-save-content-find-file (entity &optional situation)
    "Save the attached mime ENTITY and load it with `find-file-other-frame'
 s o that the appropriate emacs mode is selected according to the file extension."
@@ -815,7 +932,7 @@ s o that the appropriate emacs mode is selected according to the file extension.
      (select-frame (make-frame))
      (find-file filename)
      ))
-  
+
 ( defun my-mime-view-emacs-mode (entity &optional situation)
    "Internal method for mime-view to display the mime ENTITY in a buffer with an
 a ppropriate emacs mode."
@@ -836,8 +953,8 @@ a ppropriate emacs mode."
      (view-buffer buf)
      (goto-char (point-min))
      ))
-  
-  
+
+
 ( defun my-mime-find-file-current-entity ()
    "Save the current mime entity and load it with `find-file-other-frame'
 s o that the appropriate emacs mode is selected according to the file extension."
@@ -846,14 +963,14 @@ s o that the appropriate emacs mode is selected according to the file extension.
      (if entity
          (my-mime-save-content-find-file entity)))
    )
-  
+
 ( defun my-wl-draft-subject-check ()
    "Check whether the message has a subject before sending"
    (if (and (< (length (std11-field-body "Subject")) 1)
             (null (y-or-n-p "No subject! Send current draft?")))
        (error "Abort.")))
-  
-  
+
+
 ; ; note, this check could cause some false positives; anyway, better
 ; ; safe than sorry...
 ( defun my-wl-draft-attachment-check ()
@@ -861,29 +978,32 @@ s o that the appropriate emacs mode is selected according to the file extension.
    (save-excursion
      (goto-char 0)
      (unless ;; don't we have an attachment?
-  
+
          (re-search-forward "^Content-Disposition: attachment" nil t)
        (when ;; no attachment; did we mention an attachment?
            (re-search-forward "attach" nil t)
          (unless (y-or-n-p "Possibly missing an attachment. Send current draft?")
            (error "Abort."))))))
-  
+
 ( defun my-wl-mail-notification-hook ()
    "Update /tmp/surki-mails on new mail arrival"
    (interactive)
    (shell-command "echo New Mail > /tmp/surki-mails")
    )
-  
-  
+
+
    ;; (with-open-file (stream  "/tmp/surki-mails"
    ;;                          :direction :output
    ;;                          :if-exists :overwrite
    ;;                          :if-does-not-exist :create )
    ;;   (format stream "New Mail"))
-  
+
 ( require 'elmo)
 
+
+
 ;; MIME preview
+
 
 ;; from wl-en / Katsumi Yamaoka <yamaoka@jpl.org>
 (defun my-mime-preview-play-current-entity-with-doc-view ()
@@ -910,9 +1030,9 @@ s o that the appropriate emacs mode is selected according to the file extension.
        (lambda ()
       (interactive)
       (delete-frame (prog1
-                        (selected-frame)
-                      (quit-window 'kill))))))))
- 
+    			(selected-frame)
+    		      (quit-window 'kill))))))))
+
 (add-hook
  'mime-view-mode-hook
  (lambda ()
@@ -920,17 +1040,23 @@ s o that the appropriate emacs mode is selected according to the file extension.
     "V"
     'my-mime-preview-play-current-entity-with-doc-view)))
 
+
+
 ;; SSL settings (for imaps)
+
 
 (require 'ssl)
 (setq ssl-program-name "openssl")
 (setq ssl-program-arguments '("s_client" "-quiet" "-host" host
 "-port" service))
 
+
+
 ;; HTML messages
 
+
 (require 'mime-setup)
- 
+
 ;; For the guys who use html
 (setq mime-setup-enable-inline-html t)
 (setq mime-w3m-display-inline-images t)
@@ -944,12 +1070,15 @@ s o that the appropriate emacs mode is selected according to the file extension.
      (body . visible)
      (body-presentation-method . mime-w3m-preview-text/html)))
      (set-alist 'mime-view-type-subtype-score-alist
-             '(text . html) 3)
+    	     '(text . html) 3)
      (set-alist 'mime-view-type-subtype-score-alist
-             '(text . plain) 4)))
+    	     '(text . plain) 4)))
+
+
 
 ;; From WL mailing list post by Per b. Sederber. Re-fill messages that
-;;    arrive poorly formatted
+;; arrive poorly formatted
+
 
 (defun wl-summary-refill-message (all)
   (interactive "P")
@@ -981,50 +1110,51 @@ s o that the appropriate emacs mode is selected according to the file extension.
               (fill-region (point-min) (point-max)))))
         (message "Message re-filled"))
     (message "No message to re-fill")))
- 
+
 ;(define-key wl-summary-mode-map "\M-q" 'wl-summary-refill-message)
 
 ;; BBDB
 ;;    TODO: Document later
 
+
 (setq bbdb-file "~/.emacs.d/bbdb")           ;; keep ~/ clean; set before loading
- 
+
 (require 'bbdb) 
- 
+
 (bbdb-initialize)
- 
+
 (setq 
  bbdb-offer-save 1                        ;; 1 means save-without-asking
- 
- 
+
+
  bbdb-use-pop-up nil                        ;; allow popups for addresses
  bbdb-electric-p t                        ;; be disposable with SPC
  bbdb-popup-target-lines  1               ;; very small
- 
+
  bbdb-dwim-net-address-allow-redundancy t ;; always use full name
  bbdb-quiet-about-name-mismatches 2       ;; show name-mismatches 2 secs
- 
+
  bbdb-always-add-address t                ;; add new addresses to existing...
  ;; ...contacts automatically
  bbdb-canonicalize-redundant-nets-p t     ;; x@foo.bar.cx => x@bar.cx
- 
+
  bbdb-completion-type nil                 ;; complete on anything
- 
+
  bbdb-complete-name-allow-cycling t       ;; cycle through matches
  ;; this only works partially
- 
+
  bbbd-message-caching-enabled t           ;; be fast
  bbdb-use-alternate-names t               ;; use AKA
- 
- 
+
+
  bbdb-elided-display t                    ;; single-line addresses
- 
+
  ;; auto-create addresses from mail
  bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook   
  bbdb-ignore-some-messages-alist ;; don't ask about fake addresses
  ;; NOTE: there can be only one entry per header (such as To, From)
  ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
- 
+
  '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter"))
 )
 
@@ -1033,23 +1163,30 @@ s o that the appropriate emacs mode is selected according to the file extension.
 ;;    Flyspell offers on-the-fly spell checking. We can enable flyspell for all
 ;;    text-modes with this snippet.
 
+
 ;; TODO: Enable it after checking why flyspell binary is not working
 ;;(add-hook 'text-mode-hook 'turn-on-flyspell)
 
+
+
 ;; To use flyspell for programming there is =flyspell-prog-mode=, that only
-;;    enables spell checking for comments and strings. We can enable it for all
-;;    programming modes using the =prog-mode-hook=. Flyspell interferes with
-;;    auto-complete mode, but there is a workaround provided by auto complete.
+;; enables spell checking for comments and strings. We can enable it for all
+;; programming modes using the =prog-mode-hook=. Flyspell interferes with
+;; auto-complete mode, but there is a workaround provided by auto complete.
+
 
 ;;(add-hook 'prog-mode-hook 'flyspell-prog-mode)
 ;;(eval-after-load 'auto-complete
 ;;  '(ac-flyspell-workaround))
 
+
+
 ;; When working with several languages, we should be able to cycle through
-;;    the languages we most frequently use. Every buffer should have a separate
-;;    cycle of languages, so that cycling in one buffer does not change the
-;;    state in a different buffer (this problem occurs if you only have one
-;;    global cycle). We can implement this by using a [[http://www.gnu.org/software/emacs/manual/html_node/elisp/Closures.html][closure]].
+;; the languages we most frequently use. Every buffer should have a separate
+;; cycle of languages, so that cycling in one buffer does not change the
+;; state in a different buffer (this problem occurs if you only have one
+;; global cycle). We can implement this by using a [[http://www.gnu.org/software/emacs/manual/html_node/elisp/Closures.html][closure]].
+
 
 (defun cycle-languages ()
   "Changes the ispell dictionary to the first element in
@@ -1063,11 +1200,14 @@ the languages in ISPELL-LANGUAGES when invoked."
       (ispell-change-dictionary
        (car (setq ispell-languages (cdr ispell-languages)))))))
 
+
+
 ;; =Flyspell= signals an error if there is no spell-checking tool is
-;;    installed. We can advice =turn-on-flyspell= and =flyspell-prog-mode= to
-;;    only try to enable =flyspell= if a spell-checking tool is available. Also
-;;    we want to enable cycling the languages by typing =C-c l=, so we bind the
-;;    function returned from =cycle-languages=.
+;; installed. We can advice =turn-on-flyspell= and =flyspell-prog-mode= to
+;; only try to enable =flyspell= if a spell-checking tool is available. Also
+;; we want to enable cycling the languages by typing =C-c l=, so we bind the
+;; function returned from =cycle-languages=.
+
 
 (defadvice turn-on-flyspell (before check nil activate)
   "Turns on flyspell only if a spell-checking tool is installed."
@@ -1084,13 +1224,25 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;    When editing org-files with source-blocks, we want the source
 ;;    blocks to be themed as they would in their native mode.
 
+
 (setq org-src-fontify-natively t)
+(setq org-confirm-babel-evaluate nil)
+(setq org-latex-listings 'listings)
+
+(defadvice org-babel-execute-src-block (around load-language nil activate)
+  "Load language if needed"
+  (let ((language (org-element-property :language (org-element-at-point))))
+    (unless (cdr (assoc (intern language) org-babel-load-languages))
+      (add-to-list 'org-babel-load-languages (cons (intern language) t))
+      (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+    ad-do-it))
 
 ;; Interactive functions
 ;;    <<sec:defuns>>
 
 ;;    To search recent files useing =ido-mode= we add this snippet from
 ;;    [[http://www.emacswiki.org/emacs/CalendarWeekNumbers][EmacsWiki]].
+
 
 (defun recentf-ido-find-file ()
   "Find a recent file using Ido."
@@ -1099,12 +1251,15 @@ the languages in ISPELL-LANGUAGES when invoked."
     (when f
       (find-file f))))
 
+
+
 ;; =just-one-space= removes all whitespace around a point - giving it a
-;;    negative argument it removes newlines as well. We wrap a interactive
-;;    function around it to be able to bind it to a key. In Emacs 24.4
-;;    =cycle-spacing= was introduced, and it works like just one space, but
-;;    when run in succession it cycles between one, zero and the original
-;;    number of spaces.
+;; negative argument it removes newlines as well. We wrap a interactive
+;; function around it to be able to bind it to a key. In Emacs 24.4
+;; =cycle-spacing= was introduced, and it works like just one space, but
+;; when run in succession it cycles between one, zero and the original
+;; number of spaces.
+
 
 (defun cycle-spacing-delete-newlines ()
   "Removes whitespace before and after the point."
@@ -1113,8 +1268,11 @@ the languages in ISPELL-LANGUAGES when invoked."
       (just-one-space -1)
     (cycle-spacing -1)))
 
+
+
 ;; This interactive function switches you to a =shell=, and if
-;;    triggered in the shell it switches back to the previous buffer.
+;; triggered in the shell it switches back to the previous buffer.
+
 
 (defun switch-to-shell ()
   "Jumps to eshell or back."
@@ -1123,8 +1281,11 @@ the languages in ISPELL-LANGUAGES when invoked."
       (switch-to-prev-buffer)
     (shell)))
 
+
+
 ;; To duplicate either selected text or a line we define this interactive
-;;    function.
+;; function.
+
 
 (defun duplicate-thing ()
   "Duplicates the current line, or the region if active."
@@ -1137,7 +1298,10 @@ the languages in ISPELL-LANGUAGES when invoked."
         (newline))
       (insert (buffer-substring start end)))))
 
+
+
 ;; To tidy up a buffer we define this function borrowed from [[https://github.com/simenheg][simenheg]].
+
 
 (defun tidy ()
   "Ident, untabify and unwhitespacify current buffer, or region if active."
@@ -1152,43 +1316,65 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 ;;    Bindings for [[https://github.com/magnars/expand-region.el][expand-region]].
 
+
 (global-set-key (kbd "C-'")  'er/expand-region)
 (global-set-key (kbd "C-;")  'er/contract-region)
 
+
+
 ;; Bindings for [[https://github.com/magnars/multiple-cursors.el][multiple-cursors]].
+
 
 (global-set-key (kbd "C-c e")  'mc/edit-lines)
 (global-set-key (kbd "C-c a")  'mc/mark-all-like-this)
 (global-set-key (kbd "C-c n")  'mc/mark-next-like-this)
 
+
+
 ;; Bindings for [[http://magit.github.io][Magit]].
+
 
 (global-set-key (kbd "C-c m") 'magit-status)
 
+
+
 ;; Bindings for [[https://github.com/winterTTr/ace-jump-mode][ace-jump-mode]].
+
 
 (global-set-key (kbd "C-c SPC") 'ace-jump-mode)
 
+
+
 ;; Bindings for =move-text=.
+
 
 (global-set-key (kbd "<M-S-up>")    'move-text-up)
 (global-set-key (kbd "<M-S-down>")  'move-text-down)
 
+
+
 ;; Bind some native Emacs functions.
+
 
 (global-set-key (kbd "C-c s")    'ispell-word)
 (global-set-key (kbd "C-c t")    'org-agenda-list)
 (global-set-key (kbd "C-x k")    'kill-this-buffer)
 (global-set-key (kbd "C-x C-r")  'recentf-ido-find-file)
 
+
+
 ;; Bind the functions defined [[sec:defuns][above]].
+
 
 (global-set-key (kbd "C-c j")    'remove-whitespace-inbetween)
 (global-set-key (kbd "C-x t")    'switch-to-shell)
 (global-set-key (kbd "C-c d")    'duplicate-thing)
 (global-set-key (kbd "<C-tab>")  'tidy)
 
+
+
 ;; Bind for window move functions
+
 
 (autoload 'windmove-default-keybindings "windmove" "Window movement key bindings" t)
 (windmove-default-keybindings 'meta)
@@ -1198,7 +1384,10 @@ the languages in ISPELL-LANGUAGES when invoked."
 (global-set-key (kbd "ESC <up>") 'windmove-up)              ; move to upper window
 (global-set-key (kbd "ESC <down>") 'windmove-down)
 
+
+
 ;; Newline automatically indents
+
 
 (global-set-key (kbd "RET") 'reindent-then-newline-and-indent)
 
@@ -1207,6 +1396,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;    An advice can be given to a function to make it behave differently. This
 ;;    advice makes =eval-last-sexp= (bound to =C-x C-e=) replace the sexp with
 ;;    the value.
+
 
 (defadvice eval-last-sexp (around replace-sexp (arg) activate)
   "Replace sexp when called with a prefix argument."
@@ -1218,16 +1408,22 @@ the languages in ISPELL-LANGUAGES when invoked."
         (forward-sexp))
     ad-do-it))
 
+
+
 ;; When interactively changing the theme (using =M-x load-theme=), the
-;;    current custom theme is not disabled. This often gives weird-looking
-;;    results; we can advice =load-theme= to always disable themes currently
-;;    enabled themes.
+;; current custom theme is not disabled. This often gives weird-looking
+;; results; we can advice =load-theme= to always disable themes currently
+;; enabled themes. 
+
 
 (defadvice load-theme
   (before disable-before-load (theme &optional no-confirm no-enable) activate) 
   (mapc 'disable-theme custom-enabled-themes))
 
+
+
 ;; When zapping kill upto the character
+
 
 ;; Zap-upto-char
 (defadvice zap-to-char (after my-zap-to-char-advice (arg char) activate)
@@ -1236,36 +1432,13 @@ the languages in ISPELL-LANGUAGES when invoked."
     (insert char)
     (forward-char -1))
 
-;; Presentation-mode
-
-;;    When giving talks it's nice to be able to scale the text
-;;    globally. =text-scale-mode= works great for a single buffer, this advice
-;;    makes this work globally.
-
-(defadvice text-scale-mode (around all-buffers (arg) activate)
-  (if (not global-text-scale-mode)
-      ad-do-it
-    (setq-default text-scale-mode-amount text-scale-mode-amount)
-    (dolist (buffer (buffer-list))
-      (with-current-buffer buffer
-        ad-do-it))))
-
-;; We don't want this to be default behavior, so we can make a global mode
-;;    from the =text-scale-mode=, using =define-globalized-minor-mode=.
-
-(require 'face-remap)
-
-(define-globalized-minor-mode
-  global-text-scale-mode
-  text-scale-mode
-  (lambda () (text-scale-mode 1)))
-
 ;; Compilation
    
 ;;    Defines custom compilation command. If an EDE project is defined
 ;;    for the current buffer, it will come up with the custom compilation
 ;;    command defined over there in project settings (whether to use
 ;;    'make', msbuild.exe (Windows Visual Studio project etc).
+
 
 ;; my functions for EDE
 (defun surki-ede-get-local-var (fname var)
@@ -1292,12 +1465,12 @@ the languages in ISPELL-LANGUAGES when invoked."
          (cmd (if (functionp r) (funcall r) r)))
     (message "AA: %s" prefix)
     (set (make-local-variable 'compile-command) (or cmd compile-command))
- 
+
    (if (consp prefix)
         (set (make-local-variable 'compilation-read-command) t)
       (set (make-local-variable 'compilation-read-command) nil)
       )
- 
+
     (call-interactively 'compile))
   )
 
@@ -1322,9 +1495,9 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;          (prj (ede-current-project current-dir))
 ;;          (root-dir (ede-project-root-directory prj))
 ;;          )
-;;   (concat "sudo chroot /sandbox.4.02.01.001/ bash -l -c \"cd /agp/os.core* && make -j4 | sed -r 's:\\x1B\\[[0-9;]*[mK]::g' \"")
+;; 	(concat "sudo chroot /sandbox.4.02.01.001/ bash -l -c \"cd /agp/os.core* && make -j4 | sed -r 's:\\x1B\\[[0-9;]*[mK]::g' \"")
 ;;     ;;(concat "sudo /agp/sandbox/tools/go2sandbox /agp/sandbox/ \"\" \"cd /agp/os.core* && make -j4 \"")
-;;   ))
+;; 	))
 ;;
 ;;
 ;; Windows
@@ -1334,12 +1507,12 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;; OS API
 ;;(if (file-exists-p "x:/git/dev/os.api/os-api.sln")
 ;;    (setq gameapi
-;;     (ede-cpp-root-project "x:/git/dev/os.api/os-api.sln"
-;;                           :file "x:/git/dev/os.api/os-api.sln"
-;;                           :local-variables (list
-;;                                             (cons 'compile-command 'surki-osapi-compile-string)
-;;                                             )
-;;                           )))
+;; 	  (ede-cpp-root-project "x:/git/dev/os.api/os-api.sln"
+;; 				:file "x:/git/dev/os.api/os-api.sln"
+;; 				:local-variables (list
+;; 						  (cons 'compile-command 'surki-osapi-compile-string)
+;; 						  )
+;; 				)))
 ;; 
 ;;(defun surki-osapi-compile-string ()
 ;;  "Generates compile string for compiling osapi project"
@@ -1356,16 +1529,17 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;    effect. Instead, we use of xsel.
 ;;    [[http://hugoheden.wordpress.com/2009/03/08/copypaste-with-emacs-in-terminal/][hugoheden.wordpress.com]]
 
+
 ;; TODO: Check for Linux
 (unless window-system
- 
+
   ;; Callback for when user cuts
   (defun xsel-cut-function (text &optional push)
     ;; Insert text to temp-buffer, and "send" content to xsel stdin
     (with-temp-buffer
       (insert text)
       (call-process-region (point-min) (point-max) "xsel" nil 0 nil "--clipboard" "--input")))
- 
+
   ;; Call back for when user pastes
   (defun xsel-paste-function()
     ;; Find out what is current selection by xsel. If it is different
@@ -1375,13 +1549,14 @@ the languages in ISPELL-LANGUAGES when invoked."
     (let ((xsel-output (shell-command-to-string "xsel --clipboard --output")))
       (unless (string= (car kill-ring) xsel-output)
         xsel-output )))
- 
+
   (setq interprogram-cut-function 'xsel-cut-function)
   (setq interprogram-paste-function 'xsel-paste-function))
 
 ;; Translation
    
 ;;    Translation services
+
 
 (autoload 'babel "babel"
   "Use a web translation service to translate the message MSG." t)
@@ -1391,7 +1566,7 @@ the languages in ISPELL-LANGUAGES when invoked."
   "Use a web translation service to translate MSG, returning a string." t)
 (autoload 'babel-buffer "babel"
   "Use a web translation service to translate the current buffer." t)
- 
+
 ;; We want the translated temporary buffer to appear in the current window
 (add-to-list 'same-window-buffer-names "*babel*")
 
@@ -1399,17 +1574,18 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 ;;    Use Gnu Global for tagging. This is used for C, C++, C# etc.
 
+
 (require 'gtags)
 (add-hook 'c-mode-common-hook
   (function (lambda ()
               (require 'gtags)
               (gtags-mode t))))
- 
+
 (add-hook 'asm-mode-hook
   (function (lambda ()
               (require 'gtags)
               (gtags-mode t))))
- 
+
 (add-hook 'gtags-mode-hook
   (function (lambda()
               (local-set-key (kbd "M-.") 'gtags-find-tag)   ; find a tag, also M-.
@@ -1419,8 +1595,11 @@ the languages in ISPELL-LANGUAGES when invoked."
               ;;(local-set-key "\M-." 'gtags-find-tag) ;; M-. finds tag
               )))
 
+
+
 ;; Update the gtags database on file save to keep the tags database
-;;    uptodate.
+;; uptodate.
+
 
 (defun surki-gtags-update ()
   "create the gnu global tag file"
@@ -1428,34 +1607,34 @@ the languages in ISPELL-LANGUAGES when invoked."
   (if (= 0 (call-process "global" nil nil nil " -p")) ; tagfile doesn't exist?
        ;;(start-process "gtags" "*Messages*" "gtags" "--single-update" (buffer-name))
        (start-process "gtags" "*Messages*" "global" "--update") ))
- 
+
 (defun gtags-root-dir ()
   "Returns GTAGS root directory or nil if doesn't exist."
   (with-temp-buffer
     (if (zerop (call-process "global" nil t nil "-pr"))
      (buffer-substring (point-min) (1- (point-max)))
       nil)))
- 
-(defun gtags-update-single(filename)  
+
+(defun gtags-update-single(filename)	 
   "Update Gtags database for changes in a single file"
   (interactive)
   (if (eq system-type 'windows-nt)
       (start-process "update-gtags" "update-gtags" "cmd" "/c" (concat "cd " (gtags-root-dir) " && gtags --single-update " filename ))
     (start-process "update-gtags" "update-gtags" "bash" "-c" (concat "cd " (gtags-root-dir) " ; gtags --single-update " filename ))))
-  
+
 (defun gtags-update-current-file()
   (interactive)
   (let ((gtagsfilename (replace-regexp-in-string (gtags-root-dir) "." (buffer-file-name (current-buffer)))))
   (gtags-update-single gtagsfilename)
   (message "Gtags updated for %s" gtagsfilename)))
- 
+
 (defun gtags-update-hook()
   "Update GTAGS file incrementally upon saving a file"
   (when gtags-mode
     (when (gtags-root-dir)
       (gtags-update-current-file))))
- 
- 
+
+
 ;; (defun surki-gtags-global-update ()
 ;;   "If current directory is part of a GLOBAL database update it."
 ;;   (interactive)
@@ -1463,14 +1642,14 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;     (if (equal (call-process "global" nil nil nil "-vu") 0)
 ;;         (setq gtags-global-complete-list-obsolete-flag t)
 ;;       (error "global database update failed"))))
- 
+
 ;; (defun surki-gtags-global-dir-p (dir)
 ;;   "Return non-nil if directory DIR contains a GLOBAL database."
 ;;   (and (file-exists-p (expand-file-name "GPATH" dir))
 ;;        (file-exists-p (expand-file-name "GRTAGS" dir))
 ;;        (file-exists-p (expand-file-name "GSYMS" dir))
 ;;        (file-exists-p (expand-file-name "GTAGS" dir))))
- 
+
 ;; (defun surki-gtags-global-dir (&optional dir)
 ;;   "Return the nearest super directory that contains a GLOBAL database."
 ;;   (interactive)
@@ -1482,7 +1661,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;         (t (surki-gtags-global-dir
 ;;             (file-name-as-directory
 ;;              (expand-file-name ".."  dir))))))
- 
+
 (defun surki-gtags-next-gtag ()
   "Find next matching tag, for GTAGS."
   (interactive)
@@ -1494,22 +1673,24 @@ the languages in ISPELL-LANGUAGES when invoked."
            (next-line)
            (gtags-select-it nil))
           ) ))
- 
+
 (add-hook 'gtags-mode-hook
           (lambda ()
             ; (add-hook 'after-save-hook 'surki-gtags-update nil t)
-         (add-hook 'after-save-hook 'gtags-update-hook nil t)
-         ))
+    	 (add-hook 'after-save-hook 'gtags-update-hook nil t)
+    	 ))
 
 ;; Indentation
 
 ;;    Detect indentation automatically using dtrt-indent-mode
+   
 
 (autoload 'dtrt-indent-mode "dtrt-indent" "Adapt to foreign indentation offsets" t)
 (add-hook 'c-mode-common-hook   'dtrt-indent-mode)
 (add-hook 'java-mode-hook       'dtrt-indent-mode)
 (add-hook 'sh-mode-hook         'dtrt-indent-mode)
 (add-hook 'csharp-mode-hook     'dtrt-indent-mode)
+(add-hook 'js-mode-hook         'dtrt-indent-mode)
 
 ;; HideShow
    
@@ -1519,13 +1700,14 @@ the languages in ISPELL-LANGUAGES when invoked."
    
 ;;    [[http://www.emacswiki.org/emacs/HideShow][HideShow]]
 
+
 (defun toggle-selective-display (column)
   (interactive "P")
   (set-selective-display
    (or column
        (unless selective-display
          (1+ (current-column))))))
- 
+
 (defun toggle-hiding (column)
       (interactive "P")
       (if hs-minor-mode
@@ -1534,7 +1716,7 @@ the languages in ISPELL-LANGUAGES when invoked."
                 (error t))
               (hs-show-all))
         (toggle-selective-display column)))
- 
+
 (add-hook 'c-mode-common-hook   'hs-minor-mode)
 (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
 (add-hook 'java-mode-hook       'hs-minor-mode)
@@ -1545,6 +1727,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;; nXml
 
 ;;    nXml - make it hs-minor-mode friendly
+
 
 (add-to-list 'hs-special-modes-alist
           '(nxml-mode "<!--\\|<[^/>]>\\|<[^/][^>]*[^/]>"
@@ -1560,14 +1743,14 @@ the languages in ISPELL-LANGUAGES when invoked."
       (condition-case nil
           (nxml-forward-balanced-item 1)
         (error nil)))))
- 
+
 (defun my-nxml-mode-hook ()
   "Functions to run when in nxml mode."
   (setq nxml-sexp-element-flag t)
   (hs-minor-mode 1))
- 
+
 (add-hook 'nxml-mode-hook 'my-nxml-mode-hook)
- 
+
 (eval-after-load "hideshow.el"
   (let ((nxml-mode-hs-info '(nxml-mode ("^\\s-*\\(<[^/].*>\\)\\s-*$" 1)
                                        "^\\s-*</.*>\\s-*$")))
@@ -1577,6 +1760,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 ;; gdb
 
+
 (setq gdb-non-stop-setting nil)
 (setq gdb-switch-when-another-stopped nil)
 
@@ -1584,22 +1768,32 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 ;;    This makes =.md=-files open in =markdown-mode=.
 
+
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
+
+
 ;; We don't want to override default key bindings in CUA mode, we
-;;    just need other features of CUA mode
+;; just need other features of CUA mode
+
 
 (setq cua-enable-cua-keys nil)
 
+
+
 ;; Prefer GIT over other VCs
+
 
 (defun swap-elements ( the-list a b)
   (rotatef (car (member a the-list))
           (car (member b the-list))))
- 
+
 (setq vc-handled-backends '(Git RCS CVS SVN SCCS Bzr Hg Mtn Arch))
 
+
+
 ;; Enable autopair mode
+
 
 (require 'autopair)
 (autopair-global-mode 1)
@@ -1607,38 +1801,92 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;; Use electric-pair-mode which is part of emacs 24
 ;; (electric-pair-mode)
 
+
+
 ;; Enable switch-window. This will let us switch windows visually
+
 
 (require 'switch-window)
 
+
+
 ;; Commands to scroll one line up or down
+
 
 (defun scroll-up-one-line()
   (interactive)
   (scroll-up 1))
- 
+
 (defun scroll-down-one-line()
   (interactive)
   (scroll-down 1))
- 
+
 (global-set-key [?\C-.] 'scroll-down-one-line)
 (global-set-key [?\C-,] 'scroll-up-one-line)
 
+
+
 ;; Enable ACE jump mode
+
 
 (require 'ace-jump-mode)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 
+
+
 ;; Enable idomenu mode
+
 
 (autoload 'idomenu "idomenu" "Ido menu to list the functions in the current buffer" t)
 (global-set-key "\C-ci" 'idomenu) ; or any key you see fit
+
+
 
 ;; Enable visible bookmark mode
 
 (global-set-key (kbd "<C-f2>") 'bm-toggle)
 (global-set-key (kbd "<f2>")   'bm-next)
 (global-set-key (kbd "<S-f2>") 'bm-previous)
+
+
+
+;; Add fence-edit mode
+
+(require 'fence-edit)
+
+
+
+;; For globally increasing/decreasing the font size
+
+(require 'default-text-scale)
+
+
+
+;; Projectile configuration
+
+(require 'projectile)
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+
+
+
+;; Indent-tools configuration
+
+(require 'indent-tools)
+(global-set-key (kbd "C-c >") 'indent-tools-hydra/body)
+
+(defun my-indent-tools-hook ()
+  (local-set-key (kbd "C-c >") #'indent-tools-hydra/body))
+
+(add-hook 'python-mode-hook 'my-indent-tools-hook)
+(add-hook 'yaml-mode-hook 'my-indent-tools-hook)
+
+
+
+;; highlight-indentation configuration
+
+(require 'highlight-indentation)
+(add-hook 'yaml-mode-hook 'highlight-indentation-mode)
 
 ;; C, C++, C# and Java
 
@@ -1650,6 +1898,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 ;;    This also defines shortcuts for moving to next, previous errors in
 ;;    compile output and showing functions in the current buffer.
+
 
 (add-hook 'c-mode-common-hook
        (function (lambda ()
@@ -1663,21 +1912,43 @@ the languages in ISPELL-LANGUAGES when invoked."
                    (c-toggle-hungry-state 1))))
 ;; 'turn-on-hungry-delete-mode)
 
+
+
 ;; Default coding style
+
 
 (setq c-default-style
       '((java-mode . "java") (awk-mode . "awk") (other . "stroustrup")))
 
-;; Some statements in Java appear often, and become tedious to write
-;;    out. We can use abbrevs to speed this up.
+
+
+;; Use clang-format to auto format C/C++ files if the project contains
+;; .clang-format file.
+
+
+(require 'clang-format)
+(setq clang-format-executable "clang-format-5.0")
+
+(require 'projectile)
+;; https://eklitzke.org/smarter-emacs-clang-format
+(defun clang-format-buffer-smart ()
+  "Reformat buffer if .clang-format exists in the projectile root."
+  (when (file-exists-p (expand-file-name ".clang-format" (projectile-project-root)))
+    (clang-format-buffer)))
+
+(add-hook 'c-mode-common-hook
+          (lambda () (add-hook 'before-save-hook 'clang-format-buffer-smart nil 'local)))
 
 (define-abbrev-table 'java-mode-abbrev-table
   '(("psv" "public static void main(String[] args) {" nil 0)
     ("sopl" "System.out.println" nil 0)
     ("sop" "System.out.printf" nil 0)))
 
+
+
 ;; To be able to use the abbrev table defined above, =abbrev-mode= must be
-;;    activated.
+;; activated.
+
 
 (defun java-setup ()
   (abbrev-mode t)
@@ -1685,13 +1956,19 @@ the languages in ISPELL-LANGUAGES when invoked."
 
 (add-hook 'java-mode-hook 'java-setup)
 
-;; Hungle delete customizations
+
+
+;; Hungry delete customizations
+
 
 (load "cc-mode")
 (global-set-key (kbd "C-<delete>") 'c-hungry-delete-forward)
 (global-set-key (kbd "C-<backspace>") 'c-hungry-delete-backwards)
 
+
+
 ;; C# hook
+
 
 (add-hook 'csharp-mode-hook
        (function (lambda ()
@@ -1702,12 +1979,16 @@ the languages in ISPELL-LANGUAGES when invoked."
 (setq auto-mode-alist
       (append '(("\\.cs$" . csharp-mode)) auto-mode-alist))
 
+
+
 ;; Enable powershell
+
 
 (if (eq system-type 'windows-nt)
     (require 'powershell))
 
 ;; Go
+
 
 (defun my-go-mode-hook ()
     ; Call Gofmt before saving
@@ -1733,6 +2014,7 @@ the languages in ISPELL-LANGUAGES when invoked."
    
 ;;    Enable =surki-compile= in Makefile mode as well.
 
+
 (add-hook 'makefile-gmake-mode-hook
        (function (lambda ()
                    (define-key c-mode-base-map [f5] 'surki-compile))))
@@ -1743,6 +2025,7 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;    =comment-start= we can add comments using =M-;= like in other programming
 ;;    modes. Also in assembler should one be able to compile using =C-c C-c=.
 
+
 (add-hook 'asm-mode-hook
        (function (lambda ()
                    (define-key c-mode-base-map [f5] 'surki-compile))))
@@ -1752,6 +2035,8 @@ the languages in ISPELL-LANGUAGES when invoked."
 ;;   Enable desktop save mode. This remembers list of buffers that were open
 ;;   last time and re-opens them again in startup
 
+
 (require 'desktop)
 (setq desktop-save-mode 1            ; Desktop save mode   
-      desktop-load-locked-desktop t)
+      desktop-load-locked-desktop t
+      desktop-auto-save-timeout 20)

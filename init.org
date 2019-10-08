@@ -90,13 +90,16 @@
                  bbdb                 ; The Insidious Big Brother Database for GNU Emacs
                  boxquote             ; Quote text with a semi-box
                  csharp-mode          ; C# mode
+                 clang-format         ; clang-format
                  dtrt-indent          ; Adapt to foreign indentation offsets
                  elscreen             ; Emacs window session manager
                  expand-region        ; Increase selected region by semantic units
                  flx-ido              ; flx integration for ido
                  git-timemachine      ; Walk through git revisions of a file
                  ggtags               ; emacs frontend to GNU Global source code tagging system
+                 go-dlv               ; go dlv gud debugger
                  go-mode              ; Go lang mode
+                 highlight-indentation; Highlight based on indentation (yaml etc)
                  htmlize              ; Convert buffer text and decorations to HTML
                  hungry-delete	      ; hungry delete minor mode
                  icicles              ; icicles
@@ -104,6 +107,7 @@
                  ido-ubiquitous	      ; Use ido (nearly) everywhere.
                  ido-vertical-mode    ; Makes ido-mode display vertically.
                  idomenu              ; imenu tag selection a la ido
+                 indent-tools         ; Package for indentation and navigation
                  js2-mode             ; Improved JavaScript editing mode
                  lua-mode             ; a major-mode for editing Lua scripts
                  magit                ; control Git from Emacs
@@ -127,6 +131,9 @@
                  bm                   ; visible bookmark mode
                  projectile           ; projectile mode for project management
                  go-gopath            ; Guess GOPATH from projectile
+                 protobuf-mode        ; Protobuf mode
+                 highlight-current-line ; Highlight current line
+                 default-text-scale   ; Font size adjust globally
                ))
           ;; Remove all packages already installed
           (packages (remove-if 'package-installed-p packages)))
@@ -299,10 +306,10 @@
    (epa-file-enable)
    #+END_SRC
 
-   Set default fon
+   Set default font
 
    #+BEGIN_SRC emacs-lisp
-   (set-default-font "Courier New 12")
+   (set-default-font "Courier New 14")
    #+END_SRC
 
 ** Modes
@@ -1211,6 +1218,18 @@
 
    #+BEGIN_SRC emacs-lisp
    (setq org-src-fontify-natively t)
+   (setq org-confirm-babel-evaluate nil)
+   (setq org-latex-listings 'listings)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+   (defadvice org-babel-execute-src-block (around load-language nil activate)
+     "Load language if needed"
+     (let ((language (org-element-property :language (org-element-at-point))))
+       (unless (cdr (assoc (intern language) org-babel-load-languages))
+         (add-to-list 'org-babel-load-languages (cons (intern language) t))
+         (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+       ad-do-it))
    #+END_SRC
 
 ** Interactive functions
@@ -1398,33 +1417,6 @@
        (forward-char -1))
    #+END_SRC
 
-** Presentation-mode
-
-   When giving talks it's nice to be able to scale the text
-   globally. =text-scale-mode= works great for a single buffer, this advice
-   makes this work globally.
-
-   #+BEGIN_SRC emacs-lisp
-     (defadvice text-scale-mode (around all-buffers (arg) activate)
-       (if (not global-text-scale-mode)
-           ad-do-it
-         (setq-default text-scale-mode-amount text-scale-mode-amount)
-         (dolist (buffer (buffer-list))
-           (with-current-buffer buffer
-             ad-do-it))))
-   #+END_SRC
-
-   We don't want this to be default behavior, so we can make a global mode
-   from the =text-scale-mode=, using =define-globalized-minor-mode=.
-
-   #+BEGIN_SRC emacs-lisp
-     (require 'face-remap)
-
-     (define-globalized-minor-mode
-       global-text-scale-mode
-       text-scale-mode
-       (lambda () (text-scale-mode 1)))
-   #+END_SRC
 ** Compilation
    
    Defines custom compilation command. If an EDE project is defined
@@ -1685,6 +1677,7 @@
    (add-hook 'java-mode-hook       'dtrt-indent-mode)
    (add-hook 'sh-mode-hook         'dtrt-indent-mode)
    (add-hook 'csharp-mode-hook     'dtrt-indent-mode)
+   (add-hook 'js-mode-hook         'dtrt-indent-mode)
    #+END_SRC
 
 ** HideShow
@@ -1838,6 +1831,42 @@
     (global-set-key (kbd "<f2>")   'bm-next)
     (global-set-key (kbd "<S-f2>") 'bm-previous)
    #+END_SRC
+
+   Add fence-edit mode
+   #+BEGIN_SRC emacs-lisp
+   (require 'fence-edit)
+   #+END_SRC
+
+   For globally increasing/decreasing the font size
+   #+BEGIN_SRC emacs-lisp
+   (require 'default-text-scale)
+   #+END_SRC
+
+   Projectile configuration
+   #+BEGIN_SRC emacs-lisp
+   (require 'projectile)
+   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+   #+END_SRC
+
+   Indent-tools configuration
+   #+BEGIN_SRC emacs-lisp
+   (require 'indent-tools)
+   (global-set-key (kbd "C-c >") 'indent-tools-hydra/body)
+
+   (defun my-indent-tools-hook ()
+     (local-set-key (kbd "C-c >") #'indent-tools-hydra/body))
+
+   (add-hook 'python-mode-hook 'my-indent-tools-hook)
+   (add-hook 'yaml-mode-hook 'my-indent-tools-hook)
+   #+END_SRC
+
+   highlight-indentation configuration
+   #+BEGIN_SRC emacs-lisp
+   (require 'highlight-indentation)
+   (add-hook 'yaml-mode-hook 'highlight-indentation-mode)
+   #+END_SRC
+
 * Language mode specific
 ** C, C++, C# and Java
 
@@ -1871,8 +1900,23 @@
          '((java-mode . "java") (awk-mode . "awk") (other . "stroustrup")))
    #+END_SRC
 
-   Some statements in Java appear often, and become tedious to write
-   out. We can use abbrevs to speed this up.
+   Use clang-format to auto format C/C++ files if the project contains
+   .clang-format file.
+
+   #+BEGIN_SRC emacs-lisp
+   (require 'clang-format)
+   (setq clang-format-executable "clang-format-5.0")
+
+   (require 'projectile)
+   ;; https://eklitzke.org/smarter-emacs-clang-format
+   (defun clang-format-buffer-smart ()
+     "Reformat buffer if .clang-format exists in the projectile root."
+     (when (file-exists-p (expand-file-name ".clang-format" (projectile-project-root)))
+       (clang-format-buffer)))
+
+   (add-hook 'c-mode-common-hook
+             (lambda () (add-hook 'before-save-hook 'clang-format-buffer-smart nil 'local)))
+   #+END_SRC
 
    #+BEGIN_SRC emacs-lisp
    (define-abbrev-table 'java-mode-abbrev-table
@@ -1892,7 +1936,7 @@
    (add-hook 'java-mode-hook 'java-setup)
    #+END_SRC
 
-   Hungle delete customizations
+   Hungry delete customizations
 
    #+BEGIN_SRC emacs-lisp
    (load "cc-mode")
@@ -1973,6 +2017,7 @@
   #+BEGIN_SRC emacs-lisp
     (require 'desktop)
     (setq desktop-save-mode 1            ; Desktop save mode   
-          desktop-load-locked-desktop t)
+          desktop-load-locked-desktop t
+          desktop-auto-save-timeout 20)
   #+END_SRC
 
